@@ -33,7 +33,7 @@ task_one = DummyOperator(
 )
 
 task_two = PythonOperator(
-    task_id = 'main_fact',
+    task_id = 'main_fact_table',
     dag=injection,
     python_callable=main_table,
     trigger_rule='all_success'
@@ -52,7 +52,7 @@ task_three = PostgresOperator(
 )
 
 task_four = PythonOperator(
-    task_id = 'relationship',
+    task_id = 'relationship_table',
     dag=injection,
     python_callable=rel,
     trigger_rule='all_success'
@@ -71,7 +71,7 @@ task_five = PostgresOperator(
 )
 
 task_six = PythonOperator(
-    task_id = 'url',
+    task_id = 'url_table',
     dag=injection,
     python_callable=url,
     trigger_rule='all_success'
@@ -90,7 +90,7 @@ task_seven = PostgresOperator(
 )
 
 task_eight = PythonOperator(
-    task_id = 'reference_sites',
+    task_id = 'reference_sites_table',
     dag=injection,
     python_callable=reference,
     trigger_rule='all_success'
@@ -119,7 +119,7 @@ task_ten = PostgresOperator(
 )
 
 task_eleven = PythonOperator(
-    task_id = 'image_data',
+    task_id = 'image_data_table',
     dag=injection,
     python_callable=image_data,
     trigger_rule='all_success'
@@ -138,7 +138,7 @@ task_twelve = PostgresOperator(
 )
 
 task_thirteen = PythonOperator(
-    task_id = 'tags',
+    task_id = 'tags_table',
     dag=injection,
     python_callable=tags,
     trigger_rule='all_success'

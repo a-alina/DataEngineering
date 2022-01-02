@@ -28,7 +28,7 @@ cleaning_dag = DAG(
 
 
 task_1 = BashOperator(
-    task_id='get_original_file',
+    task_id='get_data',
     dag=cleaning_dag,
     bash_command="curl https://owncloud.ut.ee/owncloud/index.php/s/g4qB5DZrFEz2XLm/download/kym.json --output /opt/airflow/dags/kym.json",
 )
@@ -76,7 +76,7 @@ task_7 = PythonOperator(
 )
 
 task_8 = PythonOperator(
-    task_id='list_clean',
+    task_id='cleaning_lists',
     dag=cleaning_dag,
     python_callable=list_clean,
     trigger_rule='all_success'
