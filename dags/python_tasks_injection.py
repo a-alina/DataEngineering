@@ -2,47 +2,6 @@ from datetime import date
 import pandas as pd
 import numpy as np
 
-
-
-def insert():
-    memes = pd.read_csv('/opt/airflow/dags/kym.csv')
-    memes['tags'] = memes['tags'].apply(lambda row: row.split(',') if type(row) == str else row)
-
-    # unique tags 
-    collect = []
-    for row in memes['tags']:
-        if type(row) == list:
-            for tag in row:
-                if tag != '':
-                    collect.append(tag)
-        else: pass
-
-    tags_encoding = {k: v for (k,v) in zip(set(collect), [i for i in range(len(set(collect)))])}
-    tags_df = pd.DataFrame.from_dict({'tag_id': list(tags_encoding.values()), 'tag_name':list(tags_encoding.keys())})
-
-    with open("/opt/airflow/dags/tags.sql", "a") as f:
-        df_iterable = tags_df.iterrows() 
-        for index, row in df_iterable:
-            tag_id = row['tag_id']
-            tag_name = row['tag_name']
-
-            f.write(
-                "INSERT INTO tags VALUES ("
-                f"{tag_id}', '{tag_name}'"
-                ");\n"
-                    )
-
-    f.close()
-
-
-def tag_create():
-    with open("/opt/airflow/dags/tags.sql", "w") as f:
-        f.write(
-        "CREATE TABLE IF NOT EXISTS tags (\n"
-        "tag_id INT,\n"
-        "tag_name VARCHAR(255));\n"
-    )
-
 def main_table():
     memes = pd.read_csv('/opt/airflow/dags/kym.csv')
     memes = memes.reset_index()
@@ -52,15 +11,20 @@ def main_table():
 
     meme_fact['image_meta_id'] = 0
 
-    tag_comb_id = memes.apply(lambda row: row['meme_id'] if (type(row['tags']) == str or type(row['search_keywords']) == str) else None, axis=1)
+    tag_comb_id = memes.apply(lambda row: row['meme_id'] \
+    if (type(row['tags']) == str or type(row['search_keywords']) == str) \
+    else None, axis=1)
     tag_comb_id.name = 'tag_id'
     meme_fact = pd.concat([meme_fact, tag_comb_id], axis=1)
 
-    ref_comb_final = memes.apply(lambda row: row['meme_id'] if (type(row['origin']) == str or type(row['ref_site']) == str) else None, axis=1)
+    ref_comb_final = memes.apply(lambda row: row['meme_id'] \
+        if (type(row['origin']) == str or type(row['ref_site']) == str) \
+            else None, axis=1)
     ref_comb_final.name = 'reference_id'
     meme_fact = pd.concat([meme_fact, ref_comb_final], axis=1) 
 
-    rel_id = memes.apply(lambda row: row['meme_id'] if (type(row['children']) == str or type(row['parent']) == str or type(row['siblings'])==str) else None, axis=1)
+    rel_id = memes.apply(lambda row: row['meme_id'] if (type(row['children']) == str \
+        or type(row['parent']) == str or type(row['siblings'])==str) else None, axis=1)
     rel_id.name = 'relationship_id'
     meme_fact = pd.concat([meme_fact, rel_id], axis=1)
     
@@ -70,7 +34,7 @@ def main_table():
         f.write(
             "CREATE TABLE IF NOT EXISTS main_fact (\n"
             "Meme_ID INT,\n"
-            "Ttile_Name VARCHAR(255),\n"
+            "Title_Name VARCHAR(255),\n"
             "Date_added DATE,\n"
             "Year_Of_Spread INT,\n"
             "Image_Meta INT,\n"
@@ -95,7 +59,9 @@ def main_table():
 
             f.write(
                 "INSERT INTO main_fact VALUES ("
-                f"'{meme_id}', '{title}', '{added}', '{year}', {image_meta_id}, {url_id}, {tag_id}, {reference_id}, {relationship_id}"
+                f"'{meme_id}', '{title}', '{added}', '{year}', \
+                    {image_meta_id}, {url_id}, {tag_id}, {reference_id}, \
+                        {relationship_id}"
                 ");\n"
                     )
         f.close()
@@ -128,20 +94,24 @@ def rel():
     children_id = memes['children'].apply(lambda row: rel_id_extract(row, memes))
     children_id = children_id[~children_id.isna()].explode().reset_index()
     children_id['type_of_relationship'] = 1
-    children_id.rename(columns={'index':'original_meme_id', 'children':'relationship_id'}, inplace=True)
+    children_id.rename(columns={'index':'original_meme_id', \
+        'children':'relationship_id'}, inplace=True)
 
     parent_id = memes['parent'].apply(lambda row: rel_id_extract(row, memes))
 
     parent_id = parent_id[~parent_id.isna()].explode().reset_index()
     parent_id['type_of_relationship'] = 2
-    parent_id.rename(columns={'index':'original_meme_id', 'parent':'relationship_id'}, inplace=True)
+    parent_id.rename(columns={'index':'original_meme_id', 'parent':'relationship_id'},\
+         inplace=True)
 
     siblings_id = memes['siblings'].apply(lambda row: rel_id_extract(row, memes))
 
     siblings_id = siblings_id[~siblings_id.isna()].explode().reset_index()
     siblings_id['type_of_relationship'] = 3
-    siblings_id.rename(columns={'index':'original_meme_id', 'siblings':'relationship_id'}, inplace=True)
-    siblings_id = siblings_id[siblings_id['original_meme_id'] != siblings_id['relationship_id']]
+    siblings_id.rename(columns={'index':'original_meme_id',\
+         'siblings':'relationship_id'}, inplace=True)
+    siblings_id = siblings_id[siblings_id['original_meme_id'] \
+        != siblings_id['relationship_id']]
 
     relationship_df = pd.concat([children_id, parent_id, siblings_id])
     relationship_df = relationship_df.reset_index()
@@ -209,7 +179,8 @@ def url():
 def reference():
     memes = pd.read_csv('/opt/airflow/dags/kym.csv')
 
-    ref_id_df = memes['ref_site'].apply(lambda row: [i.strip() for i in row.split(',')] if type(row) == str else row)
+    ref_id_df = memes['ref_site'].apply(lambda row: \
+        [i.strip() for i in row.split(',')] if type(row) == str else row)
 
     collect_ref = []
     for row in ref_id_df:
@@ -219,14 +190,18 @@ def reference():
         else:
             pass
 
-    ref_id_encoding = {k: v for (k,v) in zip(set(collect_ref), [i for i in range(len(set(collect_ref)))])}
+    ref_id_encoding = {k: v for (k,v) in zip(set(collect_ref), \
+        [i for i in range(len(set(collect_ref)))])}
 
-    ref = pd.DataFrame.from_dict({'ref_id': list(ref_id_encoding .values()), 'ref_name':list(ref_id_encoding .keys())})
+    ref = pd.DataFrame.from_dict({'ref_id': list(ref_id_encoding .values()), \
+        'ref_name':list(ref_id_encoding .keys())})
 
 
     origin_id_encoding = {k: v for (k,v) in zip(memes['origin'].unique(), 
-                [i for i in range(len(set(collect_ref)), len(set(collect_ref)) + len(memes['origin'].unique()))])}
-    ori = pd.DataFrame.from_dict({'ref_id': list(origin_id_encoding .values()), 'ref_name':list(origin_id_encoding.keys())})
+                [i for i in range(len(set(collect_ref)), len(set(collect_ref)) \
+                    + len(memes['origin'].unique()))])}
+    ori = pd.DataFrame.from_dict({'ref_id': list(origin_id_encoding .values()),\
+         'ref_name':list(origin_id_encoding.keys())})
     ori['type_of_origin'] = 1
     ref['type_of_origin'] = 2
     reference_sites = pd.concat([ref, ori])
@@ -258,7 +233,7 @@ def reference():
         
 
 
-     #### reference_combinations
+    ## reference_combinations
 
     ref_comb = ref_id_df.apply(lambda x: [ref_id_encoding[i] for i in x] \
                                          if type(x) == list else x)
@@ -267,10 +242,12 @@ def reference():
                                          if type(x) == str else x)
 
     ref_comb_ = ref_comb[~ref_comb.isna()].explode().reset_index()
-    ref_comb_.rename(columns={'index':'ref_comb_id', 'ref_site': 'ref_id'}, inplace=True)
+    ref_comb_.rename(columns={'index':'ref_comb_id', 'ref_site': 'ref_id'},\
+         inplace=True)
 
     origin_comb = origin_comb[~origin_comb.isna()].astype(int).reset_index()
-    origin_comb.rename(columns={'index':'ref_comb_id', 'origin': 'ref_id'}, inplace=True)
+    origin_comb.rename(columns={'index':'ref_comb_id', 'origin': 'ref_id'},\
+         inplace=True)
     ref_comb_final = pd.concat([origin_comb, ref_comb_])
     
     with open("/opt/airflow/dags/reference_combinations.sql", "w") as f:
@@ -325,7 +302,8 @@ def image_data():
 
 def tags():
     memes = pd.read_csv('/opt/airflow/dags/kym.csv')
-    memes['tags'] = memes['tags'].apply(lambda row: row.split(',') if type(row) == str else row)
+    memes['tags'] = memes['tags'].apply(lambda row: row.split(',')\
+         if type(row) == str else row)
 
     # unique tags 
     collect = []
@@ -336,11 +314,14 @@ def tags():
                     collect.append(tag)
     else: pass
 
-    tags_encoding = {k: v for (k,v) in zip(set(collect), [i for i in range(len(set(collect)))])}    
-    tags_df = pd.DataFrame.from_dict({'tag_id': list(tags_encoding.values()), 'tag_name':list(tags_encoding.keys())})
+    tags_encoding = {k: v for (k,v) in zip(set(collect),\
+         [i for i in range(len(set(collect)))])}    
+    tags_df = pd.DataFrame.from_dict({'tag_id': list(tags_encoding.values()),\
+         'tag_name':list(tags_encoding.keys())})
 
 
-    search_keywords_df = memes['search_keywords'].apply(lambda row: [i.strip() for i in row.split(',')] if type(row) == str else row)
+    search_keywords_df = memes['search_keywords'].apply(lambda row:\
+         [i.strip() for i in row.split(',')] if type(row) == str else row)
     collect_s = []
     for row in search_keywords_df:
         if type(row) == list:
@@ -349,8 +330,10 @@ def tags():
         else:
             pass
     
-    keywords_encoding = {k: v for (k,v) in zip(set(collect_s), [i for i in range(len(set(collect_s)))])}
-    keywords_df = pd.DataFrame.from_dict({'tag_id': list(keywords_encoding.values()), 'tag_name':list(keywords_encoding.keys())})
+    keywords_encoding = {k: v for (k,v) in zip(set(collect_s),\
+         [i for i in range(len(set(collect_s)))])}
+    keywords_df = pd.DataFrame.from_dict({'tag_id':\
+         list(keywords_encoding.values()), 'tag_name':list(keywords_encoding.keys())})
 
     tags_df['type_id'] = 1 
     keywords_df['type_id'] = 2
@@ -381,7 +364,7 @@ def tags():
         f.close()
 
 
-    ### tag_combinations
+    ## tag_combinations
 
     tag_combination_df = memes['tags'].apply(lambda x: [tags_encoding[i] for i in x if i != ''] \
                                          if type(x) == list else x)

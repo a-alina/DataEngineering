@@ -2,11 +2,10 @@ from airflow import DAG
 import airflow
 import datetime
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.python import BranchPythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.postgres_operator import PostgresOperator
-from airflow.operators.bash_operator import BashOperator
-from python_tasks_injection import tag_create, insert, main_table, rel, url, reference, image_data, tags
+from python_tasks_injection import  \
+main_table, rel, url, reference, image_data, tags
 
 default_args_dict = {
     'owner': 'alina',
@@ -17,7 +16,6 @@ default_args_dict = {
     'retry_delay': datetime.timedelta(minutes=1),
 }
 
-
 injection = DAG(
     dag_id='injection',
     default_args=default_args_dict,
@@ -25,14 +23,13 @@ injection = DAG(
     template_searchpath=['/opt/airflow-docker/dags/']
 )
 
-
-task_one = DummyOperator(
+task_1 = DummyOperator(
     task_id = 'start',
     dag=injection,
 
 )
 
-task_two = PythonOperator(
+task_2 = PythonOperator(
     task_id = 'main_fact_table',
     dag=injection,
     python_callable=main_table,
@@ -40,8 +37,7 @@ task_two = PythonOperator(
 
 )
 
-
-task_three = PostgresOperator(
+task_3 = PostgresOperator(
     task_id='main_fact_sql',
     dag=injection,
     postgres_conn_id='postgres',
@@ -51,7 +47,7 @@ task_three = PostgresOperator(
 
 )
 
-task_four = PythonOperator(
+task_4 = PythonOperator(
     task_id = 'relationship_table',
     dag=injection,
     python_callable=rel,
@@ -59,8 +55,7 @@ task_four = PythonOperator(
 
 )
 
-
-task_five = PostgresOperator(
+task_5 = PostgresOperator(
     task_id='relationship_sql',
     dag=injection,
     postgres_conn_id='postgres',
@@ -70,7 +65,7 @@ task_five = PostgresOperator(
 
 )
 
-task_six = PythonOperator(
+task_6 = PythonOperator(
     task_id = 'url_table',
     dag=injection,
     python_callable=url,
@@ -78,8 +73,7 @@ task_six = PythonOperator(
 
 )
 
-
-task_seven = PostgresOperator(
+task_7 = PostgresOperator(
     task_id='url_sql',
     dag=injection,
     postgres_conn_id='postgres',
@@ -89,7 +83,7 @@ task_seven = PostgresOperator(
 
 )
 
-task_eight = PythonOperator(
+task_8 = PythonOperator(
     task_id = 'reference_sites_table',
     dag=injection,
     python_callable=reference,
@@ -98,7 +92,7 @@ task_eight = PythonOperator(
 )
 
 
-task_nine = PostgresOperator(
+task_9 = PostgresOperator(
     task_id='reference_sql',
     dag=injection,
     postgres_conn_id='postgres',
@@ -108,7 +102,7 @@ task_nine = PostgresOperator(
 
 )
 
-task_ten = PostgresOperator(
+task_10 = PostgresOperator(
     task_id='reference_combinations_sql',
     dag=injection,
     postgres_conn_id='postgres',
@@ -118,7 +112,7 @@ task_ten = PostgresOperator(
 
 )
 
-task_eleven = PythonOperator(
+task_11 = PythonOperator(
     task_id = 'image_data_table',
     dag=injection,
     python_callable=image_data,
@@ -126,8 +120,7 @@ task_eleven = PythonOperator(
 
 )
 
-
-task_twelve = PostgresOperator(
+task_12 = PostgresOperator(
     task_id='image_data_sql',
     dag=injection,
     postgres_conn_id='postgres',
@@ -137,7 +130,7 @@ task_twelve = PostgresOperator(
 
 )
 
-task_thirteen = PythonOperator(
+task_13 = PythonOperator(
     task_id = 'tags_table',
     dag=injection,
     python_callable=tags,
@@ -145,8 +138,7 @@ task_thirteen = PythonOperator(
 
 )
 
-
-task_fourteen = PostgresOperator(
+task_14 = PostgresOperator(
     task_id='tags_sql',
     dag=injection,
     postgres_conn_id='postgres',
@@ -156,7 +148,7 @@ task_fourteen = PostgresOperator(
 
 )
 
-task_fifteen = PostgresOperator(
+task_15 = PostgresOperator(
     task_id='tags_combinations_sql',
     dag=injection,
     postgres_conn_id='postgres',
@@ -166,6 +158,14 @@ task_fifteen = PostgresOperator(
 
 )
 
+task_16 = DummyOperator(
+    task_id = 'end',
+    dag=injection,
+)
 
-task_one >> task_two >> task_three >> task_four >> task_five >> task_six >> task_seven >> task_eight >> task_nine >> task_ten >> task_eleven >> task_twelve >> task_thirteen >> task_fourteen >> task_fifteen
+
+task_1 >> task_2 >> task_3 >> task_4 >> task_5 >> \
+task_6 >> task_7 >> task_8 >> task_9 >> task_10 >> \
+task_11 >> task_12 >> task_13 >> task_14 >> \
+task_15 >> task_16
 
