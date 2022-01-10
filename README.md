@@ -19,6 +19,8 @@ The data for the project was scraped from KnowYourMeme.
     - python_tasks_injection.py             <- script that contains injection dag python tasks
     - cypher_dag.py                         <- script that contains cypher pipline dag tasks
     - python_tasks_cypher.py                <- script that contains cypher dag python tasks
+- memes                                     <- memes inspired by the project
 - docker-compose.yaml                       <- airflow configuration
+
 
 ```
